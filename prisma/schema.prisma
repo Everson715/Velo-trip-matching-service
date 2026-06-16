@@ -11,8 +11,9 @@ datasource db {
 }
 
 enum TripStatus {
-  PENDING
-  ACCEPTED
+  SEARCHING
+  MATCHED
+  ARRIVED
   IN_PROGRESS
   COMPLETED
   CANCELLED
@@ -22,7 +23,7 @@ model Trip {
   id                    String     @id @default(uuid())
   passengerId           String
   driverId              String?
-  status                TripStatus @default(PENDING)
+  status                TripStatus @default(SEARCHING)
   originLatitude        Float
   originLongitude       Float
   destinationLatitude   Float
