@@ -12,7 +12,14 @@ export class PricingService {
   }
 
   async getSurge(lat: number, lng: number) {
-    return { multiplier: 1.5 }; // Simulação H3 lookup
+    // Simulação H3 lookup baseada em demanda locacional
+    // O ideal aqui seria usar bibliotecas h3-js para indexar e buscar polígonos
+    const baseDemand = Math.random(); 
+    let multiplier = 1.0;
+    if (baseDemand > 0.8) multiplier = 2.0;
+    else if (baseDemand > 0.5) multiplier = 1.5;
+
+    return { multiplier };
   }
 
   async getGlobalSurge() {
@@ -20,14 +27,37 @@ export class PricingService {
   }
 
   async farePreview(payload: any) {
-    return { min_fare: 20.0, max_fare: 25.0 };
+    const surge = await this.getSurge(payload.origin_lat, payload.origin_lng);
+    const baseMin = 10.0;
+    const baseMax = 15.0;
+
+    return { 
+      min_fare: baseMin * surge.multiplier, 
+      max_fare: baseMax * surge.multiplier,
+      surge_multiplier: surge.multiplier
+    };
   }
 
-  async calculateFare(estimateId: string) {
-    return { final_fare: 23.50 };
+  async calculateFare(tripId: string) {
+    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
+    if (!trip) return { final_fare: null };
+    
+    // Distância simulada (em um caso real consumiria do RoutesService)
+    const baseFare = 5.0;
+    const pricePerKm = 1.5;
+    const distanceKm = 10;
+
+    const surge = await this.getSurge(trip.origin_lat, trip.origin_lng);
+    const calculatedFare = (baseFare + (pricePerKm * distanceKm)) * surge.multiplier;
+
+    return { final_fare: calculatedFare };
   }
 
   async breakdown(tripId: string) {
-    return { base: 10, distance: 8, time: 2, surge: 1.5, total: 23.50 };
+    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
+    if (!trip) return null;
+
+    const surge = await this.getSurge(trip.origin_lat, trip.origin_lng);
+    return { base: 5.0, distance: 15.0, time: 2.0, surge: surge.multiplier, total: 22.0 * surge.multiplier };
   }
 }

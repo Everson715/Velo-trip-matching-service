@@ -1,17 +1,25 @@
-import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TripStatus } from '@prisma/client';
 import { CreateTripDto } from './dto/create-trip.dto';
+import { PaymentIntegrationClient } from './payment.client';
+import { PricingService } from '../pricing/pricing.service';
 
 @Injectable()
 export class MatchService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(MatchService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private paymentClient: PaymentIntegrationClient,
+    private pricingService: PricingService,
+  ) {}
 
   async requestTrip(passengerId: any, dto: CreateTripDto) {
     return this.prisma.trip.create({
       data: {
-        passenger_id: String(passengerId), // Ajustado para snake_case
-        origin_lat: dto.origin_lat,        // Corrigido o typo 'originlat'
+        passenger_id: String(passengerId),
+        origin_lat: dto.origin_lat,
         origin_lng: dto.origin_lng,
         dest_lat: dto.dest_lat,
         dest_lng: dto.dest_lng,
@@ -28,25 +36,26 @@ export class MatchService {
   }
 
   async cancelTrip(passengerId: any, tripId: string) {
-    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
-    if (!trip) throw new NotFoundException('Trip not found');
-    
-    if (trip.passenger_id !== String(passengerId)) {
-      throw new ForbiddenException('IDOR: Not your trip');
-    }
-    
-    if (trip.status !== TripStatus.SEARCHING && trip.status !== TripStatus.MATCHED) {
-      throw new BadRequestException('Cannot cancel trip at this stage');
-    }
-    
-    return this.prisma.trip.update({
-      where: { id: tripId },
-      data: { status: TripStatus.CANCELLED },
+    return this.prisma.$transaction(async (tx) => {
+      const trip = await tx.trip.findUnique({ where: { id: tripId } });
+      if (!trip) throw new NotFoundException('Trip not found');
+      
+      if (trip.passenger_id !== String(passengerId)) {
+        throw new ForbiddenException('IDOR: Not your trip');
+      }
+      
+      if (trip.status !== TripStatus.SEARCHING && trip.status !== TripStatus.MATCHED) {
+        throw new BadRequestException('Cannot cancel trip at this stage');
+      }
+      
+      return tx.trip.update({
+        where: { id: tripId },
+        data: { status: TripStatus.CANCELLED },
+      });
     });
   }
 
   async getAvailableTrips(driverLat: number, driverLng: number) {
-    // Simulando busca geoespacial
     return this.prisma.trip.findMany({
       where: { status: TripStatus.SEARCHING },
     });
@@ -71,56 +80,71 @@ export class MatchService {
   }
 
   async arriveTrip(driverId: any, tripId: string) {
-    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
-    if (!trip) throw new NotFoundException('Trip not found');
-    
-    if (trip.driver_id !== String(driverId)) {
-      throw new ForbiddenException('IDOR: Not your assigned trip');
-    }
-    if (trip.status !== TripStatus.MATCHED) throw new BadRequestException('Invalid state transition');
+    return this.prisma.$transaction(async (tx) => {
+      const trip = await tx.trip.findUnique({ where: { id: tripId } });
+      if (!trip) throw new NotFoundException('Trip not found');
+      
+      if (trip.driver_id !== String(driverId)) {
+        throw new ForbiddenException('IDOR: Not your assigned trip');
+      }
+      if (trip.status !== TripStatus.MATCHED) {
+        throw new BadRequestException('Invalid state transition. Must be MATCHED.');
+      }
 
-    return this.prisma.trip.update({
-      where: { id: tripId },
-      data: { status: TripStatus.ARRIVED },
+      return tx.trip.update({
+        where: { id: tripId },
+        data: { status: TripStatus.ARRIVED },
+      });
     });
   }
 
   async startTrip(driverId: any, tripId: string) {
-    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
-    if (!trip) throw new NotFoundException('Trip not found');
-    
-    if (trip.driver_id !== String(driverId)) {
-      throw new ForbiddenException('IDOR: Not your assigned trip');
-    }
-    if (trip.status !== TripStatus.ARRIVED) { // Corrigido o fluxo lógico: para iniciar, o motorista precisa ter chegado (ARRIVED)
-      throw new BadRequestException('Invalid state transition. Must be ARRIVED.');
-    }
+    return this.prisma.$transaction(async (tx) => {
+      const trip = await tx.trip.findUnique({ where: { id: tripId } });
+      if (!trip) throw new NotFoundException('Trip not found');
+      
+      if (trip.driver_id !== String(driverId)) {
+        throw new ForbiddenException('IDOR: Not your assigned trip');
+      }
+      if (trip.status !== TripStatus.ARRIVED) {
+        throw new BadRequestException('Invalid state transition. Must be ARRIVED.');
+      }
 
-    return this.prisma.trip.update({
-      where: { id: tripId },
-      data: { status: TripStatus.IN_PROGRESS },
+      return tx.trip.update({
+        where: { id: tripId },
+        data: { status: TripStatus.IN_PROGRESS },
+      });
     });
   }
 
   async completeTrip(driverId: any, tripId: string) {
-    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
-    if (!trip) throw new NotFoundException('Trip not found');
-    
-    if (trip.driver_id !== String(driverId)) {
-      throw new ForbiddenException('IDOR: Not your assigned trip');
-    }
-    if (trip.status !== TripStatus.IN_PROGRESS) {
-      throw new BadRequestException('Invalid state transition. Must be IN_PROGRESS.');
-    }
+    return this.prisma.$transaction(async (tx) => {
+      const trip = await tx.trip.findUnique({ where: { id: tripId } });
+      if (!trip) throw new NotFoundException('Trip not found');
+      
+      if (trip.driver_id !== String(driverId)) {
+        throw new ForbiddenException('IDOR: Not your assigned trip');
+      }
+      if (trip.status !== TripStatus.IN_PROGRESS) {
+        throw new BadRequestException('Invalid state transition. Must be IN_PROGRESS.');
+      }
 
-    const updated = await this.prisma.trip.update({
-      where: { id: tripId },
-      data: { status: TripStatus.COMPLETED, final_price: trip.estimated_price },
+      // Calculation of final price using PricingService
+      const fareDetails = await this.pricingService.calculateFare(tripId);
+      const finalPrice = fareDetails.final_fare || Number(trip.estimated_price);
+
+      const updated = await tx.trip.update({
+        where: { id: tripId },
+        data: { status: TripStatus.COMPLETED, final_price: finalPrice },
+      });
+
+      // Disparar captura de pagamento
+      const paymentCaptured = await this.paymentClient.capturePayment(trip.id, finalPrice, trip.passenger_id);
+      if (!paymentCaptured) {
+        this.logger.warn(`Trip ${tripId} completed but payment capture failed or is pending.`);
+      }
+
+      return updated;
     });
-
-    // Disparar evento para payment-finance-service
-    console.log(`[EXTERNAL TRIGGER] Payment capture initiated for trip ${tripId} with amount ${updated.final_price}`);
-
-    return updated;
   }
 }
