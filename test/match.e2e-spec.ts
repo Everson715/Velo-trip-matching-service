@@ -45,7 +45,26 @@ const generateAuthToken = (sub: string, role: string) => {
   return `Bearer ${Buffer.from(JSON.stringify(payload)).toString('base64')}`;
 };
 
-describe('MatchController (e2e)', () => {
+describe('MatchController (e2e)- Avançado)',() => {
+    describe('POST /match/request (Validações)', () => {
+
+    it('deve retornar 400 se as coordenadas estiverem fora do intervalo', async () => {
+
+      await request(app.getHttpServer())
+        .post('/api/v1/match/request')
+        .set('Authorization', passengerToken)
+        .send({
+          origin_lat: 1000,
+          origin_lng: -36.4,
+          dest_lat: -8.1,
+          dest_lng: -36.4,
+          estimated_price: 25.5,
+        })
+        .expect(400);
+
+    });
+
+  });
   let app: INestApplication;
   let prisma: PrismaService;
 
@@ -255,7 +274,7 @@ describe('MatchController (e2e)', () => {
         where: { id: trip.id },
       });
       
-      expect(tripInDb?.status).toBe('MATCHED'); // TripStatus.MATCHED
+      expect(tripInDb?.status).toBe(TripStatus.MATCHED); // TripStatus.MATCHED
       expect(tripInDb?.driver_id).toBe('driver-456');
     });
   });
@@ -272,7 +291,7 @@ describe('MatchController (e2e)', () => {
           origin_lat: -8.1, origin_lng: -36.1,
           dest_lat: -8.2, dest_lng: -36.2,
           estimated_price: 20.0,
-          status: 'MATCHED', // Casting se o Enum divergir no Prisma schema
+          status: TripStatus.MATCHED,
         },
       });
       tripId = trip.id;
@@ -285,12 +304,12 @@ describe('MatchController (e2e)', () => {
         .expect(200);
 
       const tripInDb = await prisma.trip.findUnique({ where: { id: tripId } });
-      expect(tripInDb?.status).toBe('ARRIVED'); 
+      expect(tripInDb?.status).toBe(TripStatus.ARRIVED); 
     });
 
     it('PATCH /api/v1/match/trip/:trip_id/start -> deve iniciar a corrida (IN_PROGRESS)', async () => {
       // Prepara o banco para ARRIVED antes
-      await prisma.trip.update({ where: { id: tripId }, data: { status: 'ARRIVED' }});
+      await prisma.trip.update({ where: { id: tripId }, data: { status: TripStatus.ARRIVED}});
       
       await request(app.getHttpServer())
         .patch(`/api/v1/match/trip/${tripId}/start`)
@@ -298,12 +317,12 @@ describe('MatchController (e2e)', () => {
         .expect(200);
 
       const tripInDb = await prisma.trip.findUnique({ where: { id: tripId } });
-      expect(tripInDb?.status).toBe('IN_PROGRESS'); 
+      expect(tripInDb?.status).toBe(TripStatus.IN_PROGRESS);
     });
 
     it('PATCH /api/v1/match/trip/:trip_id/complete -> deve finalizar a corrida (COMPLETED)', async () => {
       // Prepara o banco para IN_PROGRESS antes
-      await prisma.trip.update({ where: { id: tripId }, data: { status: 'IN_PROGRESS' }});
+      await prisma.trip.update({ where: { id: tripId }, data: { status: TripStatus.IN_PROGRESS }});
 
       await request(app.getHttpServer())
         .patch(`/api/v1/match/trip/${tripId}/complete`)
@@ -311,7 +330,7 @@ describe('MatchController (e2e)', () => {
         .expect(200);
 
       const tripInDb = await prisma.trip.findUnique({ where: { id: tripId } });
-      expect(tripInDb?.status).toBe('COMPLETED'); 
+      expect(tripInDb?.status).toBe(TripStatus.COMPLETED);
     });
   });
 });
