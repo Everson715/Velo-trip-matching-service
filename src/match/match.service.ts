@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
+import { Inject,Injectable, BadRequestException, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TripStatus } from '@prisma/client';
 import { CreateTripDto } from './dto/create-trip.dto';
@@ -11,8 +11,8 @@ export class MatchService {
 
   constructor(
     private prisma: PrismaService,
-    private paymentClient: PaymentIntegrationClient,
     private pricingService: PricingService,
+    @Inject('PAYMENT_INTEGRATION_CLIENT') private paymentClient: PaymentIntegrationClient,
   ) {}
 
   async requestTrip(passengerId: any, dto: CreateTripDto) {
@@ -117,11 +117,13 @@ export class MatchService {
     });
   }
 
-  async completeTrip(driverId: any, tripId: string) {
-    return this.prisma.$transaction(async (tx) => {
+async completeTrip(driverId: string, tripId: string) {
+    return await this.prisma.$transaction(async (tx) => {
+      // 1. Busca inicial
       const trip = await tx.trip.findUnique({ where: { id: tripId } });
       if (!trip) throw new NotFoundException('Trip not found');
-      
+
+      // 2. Validações de Negócio (IDOR e Estado) antes de processar
       if (trip.driver_id !== String(driverId)) {
         throw new ForbiddenException('IDOR: Not your assigned trip');
       }
@@ -129,19 +131,28 @@ export class MatchService {
         throw new BadRequestException('Invalid state transition. Must be IN_PROGRESS.');
       }
 
-      // Calculation of final price using PricingService
-      const fareDetails = await this.pricingService.calculateFare(tripId);
+      // 3. Cálculo do preço final (passando a entidade trip carregada)
+      const fareDetails = await this.pricingService.calculateFare(trip);
       const finalPrice = fareDetails.final_fare || Number(trip.estimated_price);
 
+      // 4. Atualização no banco
       const updated = await tx.trip.update({
         where: { id: tripId },
-        data: { status: TripStatus.COMPLETED, final_price: finalPrice },
+        data: { 
+          status: TripStatus.COMPLETED, 
+          final_price: finalPrice 
+        },
       });
 
-      // Disparar captura de pagamento
-      const paymentCaptured = await this.paymentClient.capturePayment(trip.id, finalPrice, trip.passenger_id);
-      if (!paymentCaptured) {
-        this.logger.warn(`Trip ${tripId} completed but payment capture failed or is pending.`);
+      // 5. Integração de Pagamento (fora da transação de escrita para evitar bloqueio longo)
+      try {
+        this.logger.log(`Chamando capturePayment para a trip: ${trip.id}`);
+        const paymentCaptured = await this.paymentClient.capturePayment(trip.id, finalPrice, trip.passenger_id);
+        if (!paymentCaptured) {
+          this.logger.warn(`Trip ${tripId} completed but payment capture failed.`);
+        }
+      } catch (error) {
+        this.logger.error(`Failed to capture payment for trip ${tripId}: ${error.message}`);
       }
 
       return updated;

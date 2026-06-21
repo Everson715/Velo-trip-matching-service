@@ -44,7 +44,9 @@ const generateAuthToken = (sub: string, role: string) => {
   };
   return `Bearer ${Buffer.from(JSON.stringify(payload)).toString('base64')}`;
 };
-
+  const mockpaymentClient = {
+    capturePayment: jest.fn().mockResolvedValue({status: 'success'}),
+  }
 describe('MatchController (e2e)- Avançado)',() => {
     describe('POST /match/request (Validações)', () => {
 
@@ -77,8 +79,8 @@ describe('MatchController (e2e)- Avançado)',() => {
       imports: [AppModule],
     })
       // Substitui o guard original de validação de JWT pelo nosso mock local
-      .overrideGuard(JwtAuthGuard)
-      .useClass(MockJwtAuthGuard)
+      .overrideGuard(JwtAuthGuard).useClass(MockJwtAuthGuard)
+      .overrideProvider('PAYMENT_INTEGRATION_CLIENT').useValue(mockpaymentClient)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -328,6 +330,7 @@ describe('MatchController (e2e)- Avançado)',() => {
         .patch(`/api/v1/match/trip/${tripId}/complete`)
         .set('Authorization', driverToken)
         .expect(200);
+        expect(mockpaymentClient.capturePayment).toHaveBeenCalledWith(tripId, expect.any(Number), 'passenger-123');
 
       const tripInDb = await prisma.trip.findUnique({ where: { id: tripId } });
       expect(tripInDb?.status).toBe(TripStatus.COMPLETED);

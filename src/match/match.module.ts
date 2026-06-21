@@ -8,6 +8,12 @@ import { PricingModule } from '../pricing/pricing.module';
 @Module({
   imports: [HttpModule, PricingModule],
   controllers: [MatchController],
-  providers: [MatchService, PaymentIntegrationClient],
+  providers: [
+    MatchService,
+    {
+      provide: 'PAYMENT_INTEGRATION_CLIENT', // Este é o token que seu teste usará
+      useClass: PaymentIntegrationClient,
+    },
+  ],
 })
 export class MatchModule {}

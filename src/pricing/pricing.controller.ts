@@ -1,39 +1,30 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { PricingService } from './pricing.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PrismaService } from '../prisma/prisma.service'; // Adicione isto
 
-@Controller('api/v1/pricing')
-@UseGuards(JwtAuthGuard)
+@Controller('pricing')
 export class PricingController {
-  constructor(private pricingService: PricingService) {}
+  constructor(
+    private readonly pricingService: PricingService,
+    private readonly prisma: PrismaService // Injete o Prisma
+  ) {}
 
   @Get('zones')
   async getZones() {
     return this.pricingService.getZones();
   }
 
-  @Get('surge/:lat/:lng')
-  async getSurge(@Param('lat') lat: string, @Param('lng') lng: string) {
-    return this.pricingService.getSurge(Number(lat), Number(lng));
-  }
+  // Corrigindo o calculateFare no Controller
+  @Get('calculate/:tripId')
+  async calculateFare(@Param('tripId') tripId: string) {
+    // 1. Busca a entidade completa no banco para atender a nova assinatura
+    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
+    
+    if (!trip) {
+      throw new Error('Trip not found');
+    }
 
-  @Get('surge')
-  async getGlobalSurge() {
-    return this.pricingService.getGlobalSurge();
-  }
-
-  @Post('fare-preview')
-  async farePreview(@Body() payload: any) {
-    return this.pricingService.farePreview(payload);
-  }
-
-  @Post('calculate')
-  async calculateFare(@Body('estimate_id') estimateId: string) {
-    return this.pricingService.calculateFare(estimateId);
-  }
-
-  @Get('breakdown/:id')
-  async breakdown(@Param('id') id: string) {
-    return this.pricingService.breakdown(id);
+    // 2. Passa o objeto completo, não a string
+    return this.pricingService.calculateFare(trip);
   }
 }
