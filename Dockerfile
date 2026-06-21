@@ -36,6 +36,7 @@ COPY package*.json ./
 # Copia os arquivos compilados e as node_modules prontas
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/prisma ./prisma
 
 EXPOSE 3000
 

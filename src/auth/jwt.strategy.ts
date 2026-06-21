@@ -13,7 +13,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         cache: true,
         rateLimit: true,
         jwksRequestsPerMinute: 5,
-       jwksUri: 'http://identity-driver:8000/api/v1/auth/certs',
+        jwksUri: process.env.JWKS_URI || 'http://identity-driver:8000/api/v1/auth/certs',
       }),
       algorithms: ['RS256'],
     });
