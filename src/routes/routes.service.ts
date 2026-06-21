@@ -1,29 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { OptimizeRouteDto, ReRouteDto, MatrixDto, SimulateRouteDto } from './dto/routes.dto';
 
 @Injectable()
 export class RoutesService {
-  optimize(optimizeRouteDto: OptimizeRouteDto) {
-    return `This action returns optimized route`;
+  async optimizeRoute(points: any[]) {
+    // Fallback simulado
+    return { status: 'OK', points, distance: 15.4, duration: 25 };
   }
 
-  reRoute(tripId: string, reRouteDto: ReRouteDto) {
-    return `This action re-routes trip ${tripId}`;
+  async reRoute(tripId: string, currentLat: number, currentLng: number) {
+    return { status: 'RE_ROUTED', tripId, newDistance: 12.0, newDuration: 20 };
   }
 
-  getRouteDetails(tripId: string) {
-    return `This action returns route details for trip ${tripId}`;
+  async getRoute(tripId: string) {
+    return { tripId, active: true, path: [] };
   }
 
-  getMatrix(matrixDto: MatrixDto) {
-    return `This action returns matrix`;
+  async getMatrix(origins: any[], destinations: any[]) {
+    return { origins, destinations, matrix: [] };
   }
 
-  getAlternatives() {
-    return `This action returns alternatives`;
+  async getAlternatives(origin: any, dest: any) {
+    return { alternatives: [] };
   }
 
-  simulate(simulateRouteDto: SimulateRouteDto) {
-    return `This action returns simulated route`;
+  async simulate(history: any) {
+    return { status: 'SIMULATED' };
   }
 }

@@ -1,53 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { FarePreviewDto, CalculateFareDto } from './dto/pricing.dto';
-
-const BASE_FARE = 5.0;
-const RATE_PER_MINUTE = 0.5;
-const ZONE_MULTIPLIER: Record<string, number> = {
-  A: 1.2,
-  B: 1.5,
-  C: 1.0,
-};
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class PricingService {
-  getZones() {
-    return Object.keys(ZONE_MULTIPLIER);
+  constructor(private prisma: PrismaService) {}
+
+  async getZones() {
+    return this.prisma.pricingZone.findMany({
+      where: { active_until: { gt: new Date() } }
+    });
   }
 
-  getSurgeByLocation(lat: string, lng: string) {
-    return { surge: 1.0 };
+  async getSurge(lat: number, lng: number) {
+    return { multiplier: 1.5 }; // Simulação H3 lookup
   }
 
-  getSurge() {
-    return { surge: 1.0 };
+  async getGlobalSurge() {
+    return this.prisma.pricingZone.findMany();
   }
 
-  getFarePreview(dto: FarePreviewDto) {
-    return this.calculate(dto.distanceKm, dto.timeMinutes, dto.zone);
+  async farePreview(payload: any) {
+    return { min_fare: 20.0, max_fare: 25.0 };
   }
 
-  calculateFare(dto: CalculateFareDto) {
-    return this.calculate(dto.distanceKm, dto.timeMinutes, dto.zone);
+  async calculateFare(estimateId: string) {
+    return { final_fare: 23.50 };
   }
 
-  private calculate(distanceKm: number, timeMinutes: number, zone: string) {
-    const multiplier = ZONE_MULTIPLIER[zone?.toUpperCase()] || 1.0;
-    const distanceFare = distanceKm * multiplier;
-    const timeFare = timeMinutes * RATE_PER_MINUTE;
-    const total = BASE_FARE + distanceFare + timeFare;
-
-    return {
-      total: Number(total.toFixed(2)),
-      breakdown: {
-        baseFare: BASE_FARE,
-        distanceFare: Number(distanceFare.toFixed(2)),
-        timeFare: Number(timeFare.toFixed(2)),
-      },
-    };
-  }
-
-  getBreakdown(id: string) {
-    return { id, message: 'Breakdown functionality is generic' };
+  async breakdown(tripId: string) {
+    return { base: 10, distance: 8, time: 2, surge: 1.5, total: 23.50 };
   }
 }

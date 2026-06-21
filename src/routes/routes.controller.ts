@@ -1,38 +1,39 @@
-import { Controller, Post, Get, Patch, Body, Param } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
 import { RoutesService } from './routes.service';
-import { OptimizeRouteDto, ReRouteDto, MatrixDto, SimulateRouteDto } from './dto/routes.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('routes')
+@Controller('api/v1/routes')
+@UseGuards(JwtAuthGuard)
 export class RoutesController {
   constructor(private readonly routesService: RoutesService) {}
 
   @Post('optimize')
-  optimize(@Body() optimizeRouteDto: OptimizeRouteDto) {
-    return this.routesService.optimize(optimizeRouteDto);
+  async optimize(@Body() payload: any) {
+    return this.routesService.optimizeRoute(payload.points);
   }
 
-  @Patch(':tripId/re-route')
-  reRoute(@Param('tripId') tripId: string, @Body() reRouteDto: ReRouteDto) {
-    return this.routesService.reRoute(tripId, reRouteDto);
+  @Patch(':trip_id/re-route')
+  async reRoute(@Param('trip_id') tripId: string, @Body() payload: any) {
+    return this.routesService.reRoute(tripId, payload.lat, payload.lng);
   }
 
-  @Get(':tripId')
-  getRouteDetails(@Param('tripId') tripId: string) {
-    return this.routesService.getRouteDetails(tripId);
+  @Get(':trip_id')
+  async getRoute(@Param('trip_id') tripId: string) {
+    return this.routesService.getRoute(tripId);
   }
 
   @Post('matrix')
-  getMatrix(@Body() matrixDto: MatrixDto) {
-    return this.routesService.getMatrix(matrixDto);
+  async matrix(@Body() payload: any) {
+    return this.routesService.getMatrix(payload.origins, payload.destinations);
   }
 
   @Get('alternatives')
-  getAlternatives() {
-    return this.routesService.getAlternatives();
+  async alternatives(@Body() payload: any) {
+    return this.routesService.getAlternatives(payload.origin, payload.dest);
   }
 
   @Post('simulate')
-  simulate(@Body() simulateRouteDto: SimulateRouteDto) {
-    return this.routesService.simulate(simulateRouteDto);
+  async simulate(@Body() payload: any) {
+    return this.routesService.simulate(payload);
   }
 }

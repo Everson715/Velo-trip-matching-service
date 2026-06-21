@@ -1,38 +1,39 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
 import { PricingService } from './pricing.service';
-import { FarePreviewDto, CalculateFareDto } from './dto/pricing.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('pricing')
+@Controller('api/v1/pricing')
+@UseGuards(JwtAuthGuard)
 export class PricingController {
-  constructor(private readonly pricingService: PricingService) {}
+  constructor(private pricingService: PricingService) {}
 
   @Get('zones')
-  getZones() {
+  async getZones() {
     return this.pricingService.getZones();
   }
 
   @Get('surge/:lat/:lng')
-  getSurgeByLocation(@Param('lat') lat: string, @Param('lng') lng: string) {
-    return this.pricingService.getSurgeByLocation(lat, lng);
+  async getSurge(@Param('lat') lat: string, @Param('lng') lng: string) {
+    return this.pricingService.getSurge(Number(lat), Number(lng));
   }
 
   @Get('surge')
-  getSurge() {
-    return this.pricingService.getSurge();
+  async getGlobalSurge() {
+    return this.pricingService.getGlobalSurge();
   }
 
   @Post('fare-preview')
-  getFarePreview(@Body() farePreviewDto: FarePreviewDto) {
-    return this.pricingService.getFarePreview(farePreviewDto);
+  async farePreview(@Body() payload: any) {
+    return this.pricingService.farePreview(payload);
   }
 
   @Post('calculate')
-  calculateFare(@Body() calculateFareDto: CalculateFareDto) {
-    return this.pricingService.calculateFare(calculateFareDto);
+  async calculateFare(@Body('estimate_id') estimateId: string) {
+    return this.pricingService.calculateFare(estimateId);
   }
 
   @Get('breakdown/:id')
-  getBreakdown(@Param('id') id: string) {
-    return this.pricingService.getBreakdown(id);
+  async breakdown(@Param('id') id: string) {
+    return this.pricingService.breakdown(id);
   }
 }
