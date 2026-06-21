@@ -82,7 +82,7 @@ export class MatchService {
     const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
     if (!trip) throw new NotFoundException('Trip not found');
     if (trip.driver_id !== driverId) throw new ForbiddenException('IDOR: Not your assigned trip');
-    if (trip.status !== TripStatus.ARRIVED) throw new BadRequestException('Invalid state transition. Must be ARRIVED.');
+    if (trip.status !== TripStatus.MATCHED) throw new BadRequestException('Invalid state transition. Must be MATCHED.');
 
     return this.prisma.trip.update({
       where: { id: tripId },

@@ -5,8 +5,9 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { CreateTripDto } from './dto/create-trip.dto';
+import { AcceptMatchDto, DeclineMatchDto, TripActionDto } from './dto/match.dto';
 
-@Controller('api/v1/match')
+@Controller('match')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class MatchController {
   constructor(private matchService: MatchService) {}
@@ -36,14 +37,15 @@ export class MatchController {
 
   @Post('accept')
   @Roles('DRIVER')
-  async acceptTrip(@CurrentUser() user, @Body('trip_id') tripId: string) {
-    return this.matchService.acceptTrip(user.userId, tripId);
+  async acceptTrip(@CurrentUser() user, @Body() dto: AcceptMatchDto) {
+    // Passa o userId seguro do JWT e o tripId validado do DTO
+    return this.matchService.acceptTrip(user.userId, dto.tripId);
   }
 
   @Post('decline')
   @Roles('DRIVER')
-  async declineTrip(@CurrentUser() user, @Body('trip_id') tripId: string) {
-    return this.matchService.declineTrip(user.userId, tripId);
+  async declineTrip(@CurrentUser() user, @Body() dto: DeclineMatchDto) {
+    return this.matchService.declineTrip(user.userId, dto.tripId);
   }
 
   @Patch('trip/:trip_id/arrive')

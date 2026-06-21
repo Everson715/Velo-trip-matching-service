@@ -30,18 +30,16 @@ export class AcceptMatchDto {
   @IsUUID()
   @IsNotEmpty()
   tripId: string;
-
-  @IsUUID()
-  @IsNotEmpty()
-  driverId: string;
 }
 
 export class DeclineMatchDto {
   @IsUUID()
   @IsNotEmpty()
   tripId: string;
+}
 
+export class TripActionDto {
   @IsUUID()
   @IsNotEmpty()
-  driverId: string;
+  tripId: string;
 }
