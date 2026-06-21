@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, ExecutionContext } from '@nestjs/common';
-import request from 'supertest';
+import { INestApplication, ValidationPipe, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import * as request from 'supertest';
 import { randomUUID } from 'crypto';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -27,10 +27,10 @@ class MockJwtAuthGuard {
         }
         return true;
       } catch (e) {
-        return false;
+        throw new UnauthorizedException('Token inválido');
       }
     }
-    return false; // Sem token ou token inválido falha a autenticação com 401
+    throw new UnauthorizedException('Sem token ou token inválido'); // falha a autenticação com 401
   }
 }
 
@@ -234,7 +234,7 @@ describe('MatchController (e2e)', () => {
   });
 
   describe('POST /api/v1/match/accept', () => {
-    it('motorista deve aceitar uma viagem (atualizar driver_id e mudar status para ACCEPTED)', async () => {
+    it('motorista deve aceitar uma viagem (atualizar driver_id e mudar status para MATCHED)', async () => {
       const trip = await prisma.trip.create({
         data: {
           passenger_id: 'passenger-123',
@@ -255,7 +255,7 @@ describe('MatchController (e2e)', () => {
         where: { id: trip.id },
       });
       
-      expect(tripInDb?.status).toBe('ACCEPTED'); // TripStatus.ACCEPTED
+      expect(tripInDb?.status).toBe('MATCHED'); // TripStatus.MATCHED
       expect(tripInDb?.driver_id).toBe('driver-456');
     });
   });
@@ -272,7 +272,7 @@ describe('MatchController (e2e)', () => {
           origin_lat: -8.1, origin_lng: -36.1,
           dest_lat: -8.2, dest_lng: -36.2,
           estimated_price: 20.0,
-          status: 'ACCEPTED', // Casting se o Enum divergir no Prisma schema
+          status: 'MATCHED', // Casting se o Enum divergir no Prisma schema
         },
       });
       tripId = trip.id;
