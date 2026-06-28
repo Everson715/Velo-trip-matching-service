@@ -1,4 +1,4 @@
-import { Inject, Injectable, BadRequestException, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, ForbiddenException, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { CreateTripDto } from '../../application/dtos/create-trip.dto';
 import { PricingService } from './pricing.service';
 import { TripStatus } from '../entities/trip.entity';
@@ -44,7 +44,11 @@ export class MatchService {
       throw new BadRequestException('Cannot cancel trip at this stage');
     }
     
-    return this.tripRepository.update(tripId, { status: TripStatus.CANCELLED });
+    const updated = await this.tripRepository.updateStatusSafe(tripId, trip.status, TripStatus.CANCELLED);
+    if (!updated) {
+      throw new ConflictException('Concurrency error: the trip status was changed by another process.');
+    }
+    return updated;
   }
 
   async getAvailableTrips(driverLat: number, driverLng: number) {
@@ -75,7 +79,11 @@ export class MatchService {
       throw new BadRequestException('Invalid state transition. Must be MATCHED.');
     }
 
-    return this.tripRepository.update(tripId, { status: TripStatus.ARRIVED });
+    const updated = await this.tripRepository.updateStatusSafe(tripId, TripStatus.MATCHED, TripStatus.ARRIVED);
+    if (!updated) {
+      throw new ConflictException('Concurrency error: the trip status was changed by another process.');
+    }
+    return updated;
   }
 
   async startTrip(driverId: any, tripId: string) {
@@ -88,7 +96,11 @@ export class MatchService {
       throw new BadRequestException('Invalid state transition. Must be ARRIVED.');
     }
 
-    return this.tripRepository.update(tripId, { status: TripStatus.IN_PROGRESS });
+    const updated = await this.tripRepository.updateStatusSafe(tripId, TripStatus.ARRIVED, TripStatus.IN_PROGRESS);
+    if (!updated) {
+      throw new ConflictException('Concurrency error: the trip status was changed by another process.');
+    }
+    return updated;
   }
 
   async completeTrip(driverId: string, tripId: string) {
@@ -104,10 +116,13 @@ export class MatchService {
     const fareDetails = await this.pricingService.calculateFare(trip as any); // cast for now until pricing is fully refactored
     const finalPrice = fareDetails.final_fare || Number(trip.estimated_price);
 
-    const updated = await this.tripRepository.update(tripId, { 
-      status: TripStatus.COMPLETED, 
+    const updated = await this.tripRepository.updateStatusSafe(tripId, TripStatus.IN_PROGRESS, TripStatus.COMPLETED, { 
       final_price: finalPrice 
     });
+    
+    if (!updated) {
+      throw new ConflictException('Concurrency error: the trip status was changed by another process.');
+    }
 
     try {
       this.logger.log(`Chamando capturePayment para a trip: ${trip.id}`);

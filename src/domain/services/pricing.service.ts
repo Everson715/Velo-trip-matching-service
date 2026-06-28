@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTripDto } from '../match/dto/create-trip.dto';
-import { Trip } from '@prisma/client';
+import { Trip } from '../entities/trip.entity';
 
 @Injectable()
 export class PricingService {

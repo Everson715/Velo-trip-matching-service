@@ -49,4 +49,20 @@ export class PrismaTripRepository implements ITripRepository {
     if (result.count === 0) return null;
     return this.findById(tripId);
   }
+
+  async updateStatusSafe(tripId: string, oldStatus: TripStatus, newStatus: TripStatus, data: Partial<Trip> = {}): Promise<Trip | null> {
+    const result = await this.prisma.trip.updateMany({
+      where: {
+        id: tripId,
+        status: oldStatus as unknown as PrismaTripStatus,
+      },
+      data: {
+        status: newStatus as unknown as PrismaTripStatus,
+        ...data,
+      } as any,
+    });
+
+    if (result.count === 0) return null;
+    return this.findById(tripId);
+  }
 }
