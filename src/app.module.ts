@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from './auth/auth.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { MatchModule } from './match/match.module';
-import { RoutesModule } from './routes/routes.module';
-import { PricingModule } from './pricing/pricing.module';
+import { InfrastructureModule } from './infrastructure/infrastructure.module';
+import { MatchModule } from './application/match/match.module';
+import { RoutesModule } from './application/routes/routes.module';
+import { PricingModule } from './application/pricing/pricing.module';
+import { EstimatesModule } from './application/estimates/estimates.module';
 
 @Module({
   imports: [
-    PrismaModule,
-    AuthModule,
+    InfrastructureModule,
     MatchModule,
     RoutesModule,
-    PricingModule
+    PricingModule,
+    EstimatesModule,
   ],
 })
 export class AppModule {}
