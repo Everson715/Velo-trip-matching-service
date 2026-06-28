@@ -8,6 +8,7 @@ import { I_TRIP_REPOSITORY } from '../domain/interfaces/trip.repository.interfac
 import { PrismaTripRepository } from '../infrastructure/database/repositories/prisma-trip.repository';
 import { I_PAYMENT_GATEWAY } from '../domain/interfaces/payment.gateway.interface';
 import { StripePaymentGateway } from '../infrastructure/adapters/stripe-payment.gateway';
+import { PaymentIntegrationClient } from '../infrastructure/adapters/payment.client';
 
 @Module({
   imports: [HttpModule, PricingModule],
@@ -21,6 +22,10 @@ import { StripePaymentGateway } from '../infrastructure/adapters/stripe-payment.
     {
       provide: I_PAYMENT_GATEWAY,
       useClass: StripePaymentGateway,
+    },
+    {
+      provide: 'PAYMENT_INTEGRATION_CLIENT',
+      useClass: PaymentIntegrationClient,
     },
   ],
 })

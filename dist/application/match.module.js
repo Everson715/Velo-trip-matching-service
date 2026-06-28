@@ -16,6 +16,7 @@ const trip_repository_interface_1 = require("../domain/interfaces/trip.repositor
 const prisma_trip_repository_1 = require("../infrastructure/database/repositories/prisma-trip.repository");
 const payment_gateway_interface_1 = require("../domain/interfaces/payment.gateway.interface");
 const stripe_payment_gateway_1 = require("../infrastructure/adapters/stripe-payment.gateway");
+const payment_client_1 = require("../infrastructure/adapters/payment.client");
 let MatchModule = class MatchModule {
 };
 exports.MatchModule = MatchModule;
@@ -32,6 +33,10 @@ exports.MatchModule = MatchModule = __decorate([
             {
                 provide: payment_gateway_interface_1.I_PAYMENT_GATEWAY,
                 useClass: stripe_payment_gateway_1.StripePaymentGateway,
+            },
+            {
+                provide: 'PAYMENT_INTEGRATION_CLIENT',
+                useClass: payment_client_1.PaymentIntegrationClient,
             },
         ],
     })
