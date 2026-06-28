@@ -1,8 +1,8 @@
-import { EstimatesService } from './estimates.service';
-import { EstimateRouteDto } from './dto/estimates.dto';
+import { EstimatesService } from '../../domain/services/estimates.service';
+import { EstimateRouteDto } from '../dtos/estimates.dto';
 export declare class EstimatesController {
     private readonly estimatesService;
     constructor(estimatesService: EstimatesService);
-    estimateRoute(estimateRouteDto: EstimateRouteDto): any;
-    getEta(): any;
+    estimateRoute(estimateRouteDto: EstimateRouteDto): string;
+    getEta(): string;
 }

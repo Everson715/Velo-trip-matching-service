@@ -1,10 +1,10 @@
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateTripDto } from '../match/dto/create-trip.dto';
-import { Trip } from '@prisma/client';
+import { CreateTripDto } from '../../application/dtos/create-trip.dto';
+import { Trip } from '../entities/trip.entity';
+import { IPricingRepository } from '../interfaces/pricing.repository.interface';
 export declare class PricingService {
-    private prisma;
-    constructor(prisma: PrismaService);
-    getZones(): Promise<any>;
+    private pricingRepository;
+    constructor(pricingRepository: IPricingRepository);
+    getZones(): Promise<any[]>;
     getSurge(lat: number, lng: number): Promise<{
         multiplier: number;
     }>;

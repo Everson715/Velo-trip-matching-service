@@ -1,6 +1,6 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { PricingService } from './pricing.service';
-import { PrismaService } from '../prisma/prisma.service'; // Adicione isto
+import { PricingService } from '../../domain/services/pricing.service';
+import { PrismaService } from '../../infrastructure/database/prisma.service'; // Adicione isto
 
 @Controller('pricing')
 export class PricingController {
@@ -25,6 +25,6 @@ export class PricingController {
     }
 
     // 2. Passa o objeto completo, não a string
-    return this.pricingService.calculateFare(trip);
+    return this.pricingService.calculateFare(trip as any);
   }
 }

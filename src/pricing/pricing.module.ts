@@ -1,12 +1,20 @@
 import { Module } from '@nestjs/common';
-import { PricingService } from './pricing.service';
-import { PricingController } from './pricing.controller';
-import { PrismaModule } from '../prisma/prisma.module'; // Importante para acessar o banco
+import { PricingService } from '../domain/services/pricing.service';
+import { PricingController } from '../application/controllers/pricing.controller';
+import { PrismaModule } from '../infrastructure/database/prisma.module';
+import { I_PRICING_REPOSITORY } from '../domain/interfaces/pricing.repository.interface';
+import { PrismaPricingRepository } from '../infrastructure/database/repositories/prisma-pricing.repository';
 
 @Module({
-  imports: [PrismaModule], // Adicione isso para que o PricingService possa usar o PrismaService
+  imports: [PrismaModule],
   controllers: [PricingController],
-  providers: [PricingService],
-  exports: [PricingService], // Correto: permite que o MatchService injete o PricingService
+  providers: [
+    PricingService,
+    {
+      provide: I_PRICING_REPOSITORY,
+      useClass: PrismaPricingRepository,
+    }
+  ],
+  exports: [PricingService],
 })
 export class PricingModule {}

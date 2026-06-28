@@ -11,12 +11,11 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PricingController = void 0;
 const common_1 = require("@nestjs/common");
-const pricing_service_1 = require("./pricing.service");
-const prisma_service_1 = require("../prisma/prisma.service");
+const pricing_service_1 = require("../../domain/services/pricing.service");
+const prisma_service_1 = require("../../infrastructure/database/prisma.service");
 let PricingController = class PricingController {
     constructor(pricingService, prisma) {
         this.pricingService = pricingService;
@@ -49,6 +48,7 @@ __decorate([
 ], PricingController.prototype, "calculateFare", null);
 exports.PricingController = PricingController = __decorate([
     (0, common_1.Controller)('pricing'),
-    __metadata("design:paramtypes", [typeof (_a = typeof pricing_service_1.PricingService !== "undefined" && pricing_service_1.PricingService) === "function" ? _a : Object, typeof (_b = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [pricing_service_1.PricingService,
+        prisma_service_1.PrismaService])
 ], PricingController);
 //# sourceMappingURL=pricing.controller.js.map

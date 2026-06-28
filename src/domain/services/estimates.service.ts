@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EstimateRouteDto } from './dto/estimates.dto';
+import { EstimateRouteDto } from '../../application/dtos/estimates.dto';
 
 @Injectable()
 export class EstimatesService {

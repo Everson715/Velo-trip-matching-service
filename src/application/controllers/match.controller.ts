@@ -1,11 +1,11 @@
 import { Controller, Post, Get, Delete, Patch, Param, Body, UseGuards, Query } from '@nestjs/common';
-import { MatchService } from './match.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
-import { CurrentUser } from '../auth/current-user.decorator';
-import { CreateTripDto } from './dto/create-trip.dto';
-import { AcceptMatchDto, DeclineMatchDto, TripActionDto } from './dto/match.dto';
+import { MatchService } from '../../domain/services/match.service';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { RolesGuard } from '../../auth/roles.guard';
+import { Roles } from '../../auth/roles.decorator';
+import { CurrentUser } from '../../auth/current-user.decorator';
+import { CreateTripDto } from '../dtos/create-trip.dto';
+import { AcceptMatchDto, DeclineMatchDto, TripActionDto } from '../dtos/match.dto';
 
 @Controller('match')
 @UseGuards(JwtAuthGuard, RolesGuard)

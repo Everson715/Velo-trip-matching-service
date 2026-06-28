@@ -1,6 +1,6 @@
 import { Controller, Post, Get, Body } from '@nestjs/common';
-import { EstimatesService } from './estimates.service';
-import { EstimateRouteDto } from './dto/estimates.dto';
+import { EstimatesService } from '../../domain/services/estimates.service';
+import { EstimateRouteDto } from '../dtos/estimates.dto';
 
 @Controller('estimates')
 export class EstimatesController {

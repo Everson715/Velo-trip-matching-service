@@ -8,19 +8,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a;
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PricingService = void 0;
 const common_1 = require("@nestjs/common");
-const prisma_service_1 = require("../prisma/prisma.service");
+const pricing_repository_interface_1 = require("../interfaces/pricing.repository.interface");
 let PricingService = class PricingService {
-    constructor(prisma) {
-        this.prisma = prisma;
+    constructor(pricingRepository) {
+        this.pricingRepository = pricingRepository;
     }
     async getZones() {
-        return this.prisma.pricingZone.findMany({
-            where: { active_until: { gt: new Date() } }
-        });
+        return this.pricingRepository.findActiveZones();
     }
     async getSurge(lat, lng) {
         const baseDemand = Math.random();
@@ -50,7 +50,7 @@ let PricingService = class PricingService {
         return { final_fare: calculatedFare };
     }
     async breakdown(tripId) {
-        const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
+        const trip = await this.pricingRepository.findById(tripId);
         if (!trip)
             return null;
         const surge = await this.getSurge(Number(trip.origin_lat), Number(trip.origin_lng));
@@ -66,6 +66,7 @@ let PricingService = class PricingService {
 exports.PricingService = PricingService;
 exports.PricingService = PricingService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object])
+    __param(0, (0, common_1.Inject)(pricing_repository_interface_1.I_PRICING_REPOSITORY)),
+    __metadata("design:paramtypes", [Object])
 ], PricingService);
 //# sourceMappingURL=pricing.service.js.map

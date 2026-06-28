@@ -1,6 +1,6 @@
 import { Controller, Post, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
-import { RoutesService } from './routes.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RoutesService } from '../../domain/services/routes.service';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 
 @Controller('api/v1/routes')
 @UseGuards(JwtAuthGuard)

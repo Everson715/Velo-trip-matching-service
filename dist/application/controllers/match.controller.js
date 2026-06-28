@@ -11,17 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MatchController = void 0;
 const common_1 = require("@nestjs/common");
-const match_service_1 = require("./match.service");
-const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
-const roles_guard_1 = require("../auth/roles.guard");
-const roles_decorator_1 = require("../auth/roles.decorator");
-const current_user_decorator_1 = require("../auth/current-user.decorator");
-const create_trip_dto_1 = require("./dto/create-trip.dto");
-const match_dto_1 = require("./dto/match.dto");
+const match_service_1 = require("../../domain/services/match.service");
+const jwt_auth_guard_1 = require("../../auth/jwt-auth.guard");
+const roles_guard_1 = require("../../auth/roles.guard");
+const roles_decorator_1 = require("../../auth/roles.decorator");
+const current_user_decorator_1 = require("../../auth/current-user.decorator");
+const create_trip_dto_1 = require("../dtos/create-trip.dto");
+const match_dto_1 = require("../dtos/match.dto");
 let MatchController = class MatchController {
     constructor(matchService) {
         this.matchService = matchService;
@@ -61,7 +60,7 @@ __decorate([
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_b = typeof create_trip_dto_1.CreateTripDto !== "undefined" && create_trip_dto_1.CreateTripDto) === "function" ? _b : Object]),
+    __metadata("design:paramtypes", [Object, create_trip_dto_1.CreateTripDto]),
     __metadata("design:returntype", Promise)
 ], MatchController.prototype, "requestTrip", null);
 __decorate([
@@ -95,7 +94,7 @@ __decorate([
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_c = typeof match_dto_1.AcceptMatchDto !== "undefined" && match_dto_1.AcceptMatchDto) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [Object, match_dto_1.AcceptMatchDto]),
     __metadata("design:returntype", Promise)
 ], MatchController.prototype, "acceptTrip", null);
 __decorate([
@@ -104,7 +103,7 @@ __decorate([
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_d = typeof match_dto_1.DeclineMatchDto !== "undefined" && match_dto_1.DeclineMatchDto) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [Object, match_dto_1.DeclineMatchDto]),
     __metadata("design:returntype", Promise)
 ], MatchController.prototype, "declineTrip", null);
 __decorate([
@@ -137,6 +136,6 @@ __decorate([
 exports.MatchController = MatchController = __decorate([
     (0, common_1.Controller)('match'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    __metadata("design:paramtypes", [typeof (_a = typeof match_service_1.MatchService !== "undefined" && match_service_1.MatchService) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [match_service_1.MatchService])
 ], MatchController);
 //# sourceMappingURL=match.controller.js.map
