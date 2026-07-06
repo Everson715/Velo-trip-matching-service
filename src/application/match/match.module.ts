@@ -12,7 +12,7 @@ import { PaymentIntegrationClient } from '../../infrastructure/external/payment/
     MatchApplicationService,
     {
       provide: 'PAYMENT_INTEGRATION_CLIENT',
-      useClass: PaymentIntegrationClient,
+      useExisting: PaymentIntegrationClient,
     },
   ],
 })
